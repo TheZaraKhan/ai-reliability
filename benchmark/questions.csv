@@ -1,0 +1,150 @@
+question_id,category,question,oracle_code,computed_truth
+Q01,simple,How many trip records are in the quarter?,"def q01(data: pd.DataFrame) -> int:
+    return len(data)",779266
+Q02,simple,What is the shortest recorded trip duration in seconds?,"def q02(data: pd.DataFrame) -> int:
+    return int(data[""trip_duration""].min())",0
+Q03,simple,What is the longest recorded trip duration in seconds?,"def q03(data: pd.DataFrame) -> int:
+    return int(data[""trip_duration""].max())",2320126
+Q04,simple,How many trips have a recorded duration under 60 seconds?,"def q04(data: pd.DataFrame) -> int:
+    return int(data[""trip_duration""].lt(60).sum())",1572
+Q05,simple,How many trips have a missing end station ID?,"def q05(data: pd.DataFrame) -> int:
+    return int(data[""end_station_id""].isna().sum())",283
+Q06,simple,How many distinct non-missing bike IDs appear in the data?,"def q06(data: pd.DataFrame) -> int:
+    return int(data[""bike_id""].nunique(dropna=True))",6704
+Q07,simple,How many trips have user type Member?,"def q07(data: pd.DataFrame) -> int:
+    return int(data[""user_type""].eq(""Member"").sum())",708158
+Q08,simple,What is the median recorded trip duration in seconds?,"def q08(data: pd.DataFrame) -> float:
+    return float(data[""trip_duration""].median())",597.0
+Q09,multi_step,"Which calendar month had the most trip starts? Give the month as YYYY-MM. If tied, give the earliest month.","def q09(data: pd.DataFrame) -> str:
+    # Sort the months first so idxmax picks the earliest month if counts tie.
+    months = data[""start_time""].dt.to_period(""M"")
+    counts = months.value_counts().sort_index()
+    return str(counts.idxmax())",2024-03
+Q10,multi_step,What percentage of March trip records have user type Casual? Use all March trip records as the denominator and report on a 0–100 scale.,"def q10(data: pd.DataFrame) -> float:
+    march = data.loc[data[""start_time""].dt.month.eq(3)]
+    # Count Casual trips and divide by all March trip records.
+    return 100 * int(march[""user_type""].eq(""Casual"").sum()) / len(march)",10.565779414163838
+Q11,multi_step,"Among trips with both station IDs present, how many started and ended at the same station?","def q11(data: pd.DataFrame) -> int:
+    # Compare station IDs only for records with both endpoints present.
+    trips = data.dropna(subset=[""start_station_id"", ""end_station_id""])
+    return int(trips[""start_station_id""].eq(trips[""end_station_id""]).sum())",18618
+Q12,multi_step,What is the median recorded trip duration in seconds for Member trips that started on Saturday or Sunday?,"def q12(data: pd.DataFrame) -> float:
+    # pandas numbers the days Monday = 0 through Sunday = 6.
+    weekend = data[""start_time""].dt.dayofweek.isin([5, 6])
+    member = data[""user_type""].eq(""Member"")
+    return float(data.loc[weekend & member, ""trip_duration""].median())",582.0
+Q13,multi_step,"Which start station ID had the most Casual trip starts in March? Exclude missing start station IDs. If tied, give the lowest station ID.","def q13(data: pd.DataFrame) -> int:
+    march = data[""start_time""].dt.month.eq(3)
+    casual = data[""user_type""].eq(""Casual"")
+    stations = data.loc[march & casual, ""start_station_id""].dropna()
+    # Sorting the station IDs first gives the lowest ID if counts tie.
+    return int(stations.value_counts().sort_index().idxmax())",7016
+Q14,messy_data,"Give the mean recorded duration in seconds using all rows, and again using only trips with durations from 60 through 86,400 seconds inclusive. Label the two values raw and cleaned.","def q14(data: pd.DataFrame) -> dict[str, float]:
+    duration = data[""trip_duration""]
+    cleaned = duration[duration.between(60, 86_400, inclusive=""both"")]
+    return {""raw"": float(duration.mean()), ""cleaned"": float(cleaned.mean())}","{'raw': 947.0865750590941, 'cleaned': 818.4414279870646}"
+Q15,messy_data,Give the number of trip records before and after removing exact duplicate rows. Label the two counts raw and cleaned.,"def q15(data: pd.DataFrame) -> dict[str, int]:
+    # Exact duplicates must match across every column.
+    return {""raw"": len(data), ""cleaned"": len(data.drop_duplicates())}","{'raw': 779266, 'cleaned': 779266}"
+Q16,messy_data,Give the percentage of trip records with a missing end time before and after excluding records with a missing end station ID. Report both on a 0–100 scale and label them raw and cleaned.,"def q16(data: pd.DataFrame) -> dict[str, float]:
+    with_end_station = data.loc[data[""end_station_id""].notna()]
+    return {
+        ""raw"": 100 * float(data[""end_time""].isna().mean()),
+        ""cleaned"": 100 * float(with_end_station[""end_time""].isna().mean()),
+    }","{'raw': 0.0019248882923161026, 'cleaned': 0.0}"
+Q17,ambiguous,How many trips happened in March? State which timestamp you used.,"def q17(data: pd.DataFrame) -> dict[str, int]:
+    # Both counts use the same Q1 extract, which Stage 1 selected by start time.
+    return {
+        ""start_time"": int(data[""start_time""].dt.month.eq(3).sum()),
+        ""end_time"": int(data[""end_time""].dt.month.eq(3).sum()),
+    }","{'start_time': 312613, 'end_time': 312585}"
+Q18,ambiguous,What was the typical trip duration in seconds? State which statistic you used.,"def q18(data: pd.DataFrame) -> dict[str, float]:
+    duration = data[""trip_duration""]
+    return {""mean"": float(duration.mean()), ""median"": float(duration.median())}","{'mean': 947.0865750590941, 'median': 597.0}"
+Q19,unanswerable,What was the average age of riders in the quarter?,"def q19(data: pd.DataFrame) -> None:
+    return None  # Trip records do not contain rider ages.",
+Q20,unanswerable,"What was the total distance travelled by riders in the quarter, in kilometres?","def q20(data: pd.DataFrame) -> None:
+    return None  # Trip records do not contain distance travelled.",
+Q21,simple,How many trip records have the bicycle model EFIT G5?,"def q21(data: pd.DataFrame) -> int:
+    return int(data[""bike_model""].eq(""EFIT G5"").sum())",22713
+Q22,simple,How many distinct non-missing bicycle model labels appear?,"def q22(data: pd.DataFrame) -> int:
+    return int(data[""bike_model""].dropna().nunique())",3
+Q23,simple,"How many trips started on February 29, 2024? Use start_time.","def q23(data: pd.DataFrame) -> int:
+    return int(data[""start_time""].dt.normalize().eq(pd.Timestamp(""2024-02-29"")).sum())",8823
+Q24,simple,How many trips started from 07:00 inclusive to 08:00 exclusive?,"def q24(data: pd.DataFrame) -> int:
+    hours = data[""start_time""].dt.hour
+    return int(hours.eq(7).sum())",29156
+Q25,simple,How many trips have a recorded duration of exactly 60 seconds?,"def q25(data: pd.DataFrame) -> int:
+    return int(data[""trip_duration""].eq(60).sum())",30
+Q26,simple,How many distinct non-missing end station IDs appear?,"def q26(data: pd.DataFrame) -> int:
+    return int(data[""end_station_id""].dropna().nunique())",798
+Q27,simple,How many trips started on a Sunday?,"def q27(data: pd.DataFrame) -> int:
+    return int(data[""start_time""].dt.dayofweek.eq(6).sum())",83238
+Q28,simple,What is the 90th percentile of recorded trip duration in seconds? Use linear interpolation.,"def q28(data: pd.DataFrame) -> float:
+    return float(data[""trip_duration""].quantile(0.9, interpolation=""linear""))",1485.0
+Q29,multi_step,What was the percentage change in trip starts from January to March 2024? Use January's count as the baseline and report the signed percentage.,"def q29(data: pd.DataFrame) -> float:
+    starts = data[""start_time""].dt.month
+    jan = starts.eq(1).sum()
+    mar = starts.eq(3).sum()
+    return float(((mar - jan) / jan) * 100)",52.58420823998555
+Q30,multi_step,"Which start station ID had the most trip starts from 07:00 inclusive to 10:00 exclusive on Mondays through Fridays? Exclude missing IDs. If tied, give the lowest station ID.","def q30(data: pd.DataFrame) -> int:
+    starts = data[""start_time""]
+    is_weekday = starts.dt.dayofweek.lt(5)
+    is_hour_range = starts.dt.hour.between(7, 9, inclusive=""both"")
+    stations = data.loc[is_weekday & is_hour_range, ""start_station_id""].dropna()
+    return int(stations.value_counts().sort_index().idxmax())",7033
+Q31,multi_step,"Among records with a non-missing bike ID and user type Member or Casual, how many distinct bike IDs appear in both user types?","def q31(data: pd.DataFrame) -> int:
+    valid = data.dropna(subset=[""bike_id""]).loc[data[""user_type""].isin([""Member"", ""Casual""])]
+    groups = valid.groupby(""bike_id"")[""user_type""].nunique()
+    return int((groups == 2).sum())",6416
+Q32,multi_step,"Which calendar date in February 2024 had the most Casual trip starts? Give the date as YYYY-MM-DD. If tied, give the earliest date.","def q32(data: pd.DataFrame) -> str:
+    feb = data[""start_time""].dt.month.eq(2)
+    casual = data[""user_type""].eq(""Casual"")
+    dates = data.loc[feb & casual, ""start_time""].dt.date
+    return str(dates.value_counts().sort_index().idxmax())",2024-02-10
+Q33,multi_step,"For trips that started at station 7016 and ended at a different station, which end station ID appears most often? Exclude missing end station IDs. If tied, give the lowest end station ID.","def q33(data: pd.DataFrame) -> int:
+    st_7016 = data[""start_station_id""].eq(7016)
+    diff_station = data[""end_station_id""].ne(7016)
+    endpoints = data.loc[st_7016 & diff_station, ""end_station_id""].dropna()
+    return int(endpoints.value_counts().sort_index().idxmax())",7261
+Q34,messy_data,"Compute the percentage of trip records that returned to their start station. For raw, divide matching non-missing station pairs by all trip records. For cleaned, divide the same count by records with both station IDs present. Report both on a 0–100 scale and label them raw and cleaned.","def q34(data: pd.DataFrame) -> dict[str, float]:
+    matching = data[""start_station_id""].eq(data[""end_station_id""]) & data[""start_station_id""].notna()
+    num_matching = matching.sum()
+    raw_pct = (num_matching / len(data)) * 100
+    valid_records = data[""start_station_id""].notna() & data[""end_station_id""].notna()
+    cleaned_pct = (num_matching / valid_records.sum()) * 100
+    return {""raw"": float(raw_pct), ""cleaned"": float(cleaned_pct)}","{'raw': 2.3891713484227464, 'cleaned': 2.39003932049865}"
+Q35,messy_data,"How many distinct non-missing start station names appear before and after stripping leading and trailing whitespace and converting names to lowercase? If normalization produces an empty name, exclude it from the cleaned count. Label the counts raw and cleaned.","def q35(data: pd.DataFrame) -> dict[str, int]:
+    raw_names = data[""start_station_name""].dropna()
+    raw_count = raw_names.nunique()
+    cleaned_names = raw_names.str.strip().str.lower()
+    cleaned_names = cleaned_names[cleaned_names.ne("""")]
+    return {""raw"": int(raw_count), ""cleaned"": int(cleaned_names.nunique())}","{'raw': 796, 'cleaned': 796}"
+Q36,messy_data,"Among trips with both timestamps present, how many have a recorded duration that differs from end_time minus start_time? For raw, count any nonzero absolute difference. For cleaned, count only absolute differences greater than one second. Label the counts raw and cleaned.","def q36(data: pd.DataFrame) -> dict[str, int]:
+    valid = data.dropna(subset=[""start_time"", ""end_time""])
+    calc_duration = (valid[""end_time""] - valid[""start_time""]).dt.total_seconds()
+    diff = (valid[""trip_duration""] - calc_duration).abs()
+    return {""raw"": int(diff.ne(0).sum()), ""cleaned"": int(diff.gt(1).sum())}","{'raw': 64, 'cleaned': 64}"
+Q37,ambiguous,"What was the busiest station in Q1? Report the station ID and state whether you counted departures, arrivals, or both. Exclude missing station IDs and give the lowest ID if tied.","def q37(data: pd.DataFrame) -> dict[str, int]:
+    departures = data[""start_station_id""].dropna()
+    arrivals = data[""end_station_id""].dropna()
+    both = pd.concat([departures, arrivals])
+    return {
+        ""departures"": int(departures.value_counts().sort_index().idxmax()),
+        ""arrivals"": int(arrivals.value_counts().sort_index().idxmax()),
+        ""both"": int(both.value_counts().sort_index().idxmax())
+    }","{'departures': 7006, 'arrivals': 7033, 'both': 7033}"
+Q38,ambiguous,"What was the busiest day in Q1? State whether you mean a single calendar date or a day of the week. Use trip starts. If tied, pick the earliest date or the earliest weekday in Monday-to-Sunday order.","def q38(data: pd.DataFrame) -> dict[str, str]:
+    starts = data[""start_time""]
+    date_counts = starts.dt.date.value_counts().sort_index()
+    day_counts = starts.dt.day_name().value_counts()
+    days_order = [""Monday"", ""Tuesday"", ""Wednesday"", ""Thursday"", ""Friday"", ""Saturday"", ""Sunday""]
+    day_counts = day_counts.reindex(days_order)
+    return {
+        ""calendar_date"": str(date_counts.idxmax()),
+        ""day_of_week"": str(day_counts.idxmax())
+    }","{'calendar_date': '2024-03-13', 'day_of_week': 'Wednesday'}"
+Q39,unanswerable,How many attempted rentals failed because no bike was available at the requested station?,"def q39(data: pd.DataFrame) -> None:
+    return None",
+Q40,unanswerable,How many distinct people took a Bike Share trip during the quarter?,"def q40(data: pd.DataFrame) -> None:
+    return None",
